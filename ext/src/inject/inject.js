@@ -5,6 +5,8 @@ const readyStateCheckInterval = setInterval(function () {
     }
 }, 10);
 
+const warnedDivs = [];
+
 function main() {
     const jobQueue = new JobQueue(2000);
     const emailDivs = document.querySelectorAll("*[email]");
@@ -14,12 +16,37 @@ function main() {
         jobQueue.addJob(() => checkBreaches(email, emailDiv));
 
     });
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            const node = mutation.target;
+            if (node.children.length === 0) {
+                handleElement(node);
+            } else {
+                const emailElements = node.querySelectorAll('*[email]');
+                emailElements.forEach((emailElement) => handleElement(emailElement))
+            }
+
+            function handleElement(node) {
+                if (node.hasAttributes() && node.getAttribute('email') != null && warnedDivs.indexOf(node) === -1) {
+                    const email = node.getAttribute('email');
+                    jobQueue.addJob(() => checkBreaches(email, node));
+                    warnedDivs.push(node);
+                }
+
+            }
+
+        })
+    });
+    observer.observe(document.body, {childList: true, subtree: true})
 }
 
 function checkBreaches(email, emailDiv) {
     getBreaches(email).then((json) => {
-        const breachedElement = document.createElement('span');
         if (json.length > 0) {
+            const breachedElement = document.createElement('img');
+            breachedElement.classList.add('pwned-warning-icon');
+            breachedElement.setAttribute('src', chrome.runtime.getURL('images/warning.png'));
             breachedElement.setAttribute('title', JSON.stringify(json));
             breachedElement.textContent = json.length + ' breaches';
             emailDiv.appendChild(breachedElement);
