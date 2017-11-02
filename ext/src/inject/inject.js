@@ -1,5 +1,3 @@
-const breachUrl = 'https://haveibeenpwned.com/api/v2/breachedaccount/';
-
 const readyStateCheckInterval = setInterval(function () {
     if (document.readyState === "complete") {
         clearInterval(readyStateCheckInterval);
@@ -19,20 +17,38 @@ function main() {
 }
 
 function checkBreaches(email, emailDiv) {
-    fetch(breachUrl + email)
-        .then((response) => {
-            if (response.status === 200) {
-                response.json().then((json) => {
-                    const breachedElement = document.createElement('span');
-                    console.log(json);
-                    breachedElement.setAttribute('title', JSON.stringify(json));
-                    breachedElement.textContent = json.length + ' breaches';
-                    emailDiv.appendChild(breachedElement);
-                })
-            }
-        }).catch((err) => {
-        console.error(err);
-    })
+    getBreaches(email).then((json) => {
+        const breachedElement = document.createElement('span');
+        if (json.length > 0) {
+            breachedElement.setAttribute('title', JSON.stringify(json));
+            breachedElement.textContent = json.length + ' breaches';
+            emailDiv.appendChild(breachedElement);
+        }
+    });
+}
+
+const breachUrl = 'https://haveibeenpwned.com/api/v2/breachedaccount/';
+
+function getBreaches(email) {
+    const cached = localStorage.getItem(email);
+    if (cached != null) {
+        return new Promise((resolved) => {
+            resolved(JSON.parse(cached));
+        })
+    } else {
+        return fetch(breachUrl + email)
+            .then((response) => {
+                if (response.status === 200) {
+                    return response.json();
+                } else if (response.status = 404) {
+                    return [];
+                    // return new Promise((resolved) => resolved([]));
+                }
+            }).then((json) => {
+                localStorage.setItem(email, JSON.stringify(json));
+                return json;
+            })
+    }
 }
 
 
