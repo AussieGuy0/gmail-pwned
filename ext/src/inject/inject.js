@@ -5,6 +5,13 @@ const readyStateCheckInterval = setInterval(function () {
     }
 }, 10);
 
+class Logger {
+    log(msg) {
+        if (DEBUG) {
+            console.log(msg);
+        }
+    }
+}
 class JobQueue {
     constructor(timeBetweenJobs) {
         this.timeInterval = timeBetweenJobs;
@@ -26,9 +33,14 @@ class JobQueue {
     }
 }
 
+const DEBUG = true;
+const logger = new Logger();
+const imgClass = 'pwned-warning-icon';
+const popupClass = 'pwned-breach-popup';
+const breachUrl = 'https://haveibeenpwned.com/api/v2/breachedaccount/';
+
 const warnedDivs = [];
 const jobQueue = new JobQueue(2000);
-const imgClass = 'pwned-warning-icon';
 
 function main() {
     const emailDivs = document.querySelectorAll("*[email]");
@@ -70,8 +82,10 @@ function getBreachesAndInsertIcon(email, emailDiv) {
 
     const cached = localStorage.getItem(email);
     if (cached != null) {
+        logger.log(`Getting ${email} breaches from cache`);
         addBreachToDiv(JSON.parse(cached));
     } else {
+        logger.log(`Getting ${email} breaches from api`);
         jobQueue.addJob(() => {
             fetchBreaches(email).then((json) => {
                 "use strict";
@@ -80,14 +94,24 @@ function getBreachesAndInsertIcon(email, emailDiv) {
         })
     }
 
-    function addBreachToDiv(json) {
-        if (json.length > 0) {
-            const breachedElement = document.createElement('img');
-            breachedElement.classList.add(imgClass);
-            breachedElement.setAttribute('src', chrome.runtime.getURL('images/warning.png'));
-            breachedElement.setAttribute('title', JSON.stringify(json));
-            breachedElement.textContent = json.length + ' breaches';
-            emailDiv.appendChild(breachedElement);
+    function addBreachToDiv(breaches) {
+        if (breaches.length > 0) {
+            logger.log(`Icon added to: `);
+            logger.log(emailDiv);
+            const breachedIcon = document.createElement('img');
+            breachedIcon.classList.add(imgClass);
+            breachedIcon.setAttribute('src', chrome.runtime.getURL('images/warning.png'));
+            breachedIcon.textContent = breaches.length + ' breaches';
+            emailDiv.appendChild(breachedIcon);
+
+            const div = createBreachInfoDiv(email, breachedIcon, breaches);
+            breachedIcon.addEventListener('mouseenter', () => {
+                document.body.appendChild(div);
+            });
+
+            breachedIcon.addEventListener('mouseleave', () => {
+                document.body.removeChild(div);
+            });
 
             const observer = new MutationObserver((e) => {
                 "use strict";
@@ -101,7 +125,6 @@ function getBreachesAndInsertIcon(email, emailDiv) {
     }
 }
 
-const breachUrl = 'https://haveibeenpwned.com/api/v2/breachedaccount/';
 
 function fetchBreaches(email) {
     return fetch(breachUrl + email)
@@ -117,4 +140,17 @@ function fetchBreaches(email) {
         })
 }
 
+function createBreachInfoDiv(email, icon, breaches) {
+    const div = document.createElement('div');
+    div.classList.add(popupClass);
 
+    div.innerHTML =
+        `<h2>${email} breached! </h2>
+        <p><strong>${email}</strong> has been in ${breaches.length} data breaches! </p>
+        <footer>Data from <a>https://haveibeenpwned.com</a></footer>
+        `
+    const dimensions = icon.getBoundingClientRect();
+    div.style.left = (dimensions.left + 20) + 'px';
+    div.style.top = (dimensions.top + 10) + 'px';
+    return div;
+}

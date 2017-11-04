@@ -1,3 +1,13 @@
 .pwned-warning-icon {
     vertical-align: text-bottom;
 }
+
+.pwned-breach-popup {
+    position: absolute;
+    width: 350px;
+    height: 150px;
+    z-index: 1000;
+    box-shadow: 0 0 4px rgba(0,0,0,.14), 0 4px 8px rgba(0,0,0,.28);
+    padding: 5px;
+    background: white;
+}
