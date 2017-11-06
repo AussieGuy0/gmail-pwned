@@ -104,8 +104,11 @@ function getBreachesAndInsertIcon(email, emailDiv) {
             breachedIcon.textContent = breaches.length + ' breaches';
             emailDiv.appendChild(breachedIcon);
 
-            const div = createBreachInfoDiv(email, breachedIcon, breaches);
+            const div = createBreachInfoDiv(email, breaches);
             breachedIcon.addEventListener('mouseenter', () => {
+                const dimensions = getCoords(breachedIcon);
+                div.style.left = (dimensions.left + 20) + 'px';
+                div.style.top = (dimensions.top + 10) + 'px';
                 document.body.appendChild(div);
             });
 
@@ -140,7 +143,7 @@ function fetchBreaches(email) {
         })
 }
 
-function createBreachInfoDiv(email, icon, breaches) {
+function createBreachInfoDiv(email, breaches) {
     const div = document.createElement('div');
     div.classList.add(popupClass);
 
@@ -149,8 +152,14 @@ function createBreachInfoDiv(email, icon, breaches) {
         <p><strong>${email}</strong> has been in ${breaches.length} data breaches! </p>
         <footer>Data from <a>https://haveibeenpwned.com</a></footer>
         `
-    const dimensions = icon.getBoundingClientRect();
-    div.style.left = (dimensions.left + 20) + 'px';
-    div.style.top = (dimensions.top + 10) + 'px';
     return div;
+}
+
+function getCoords(elem) {
+    let box = elem.getBoundingClientRect();
+
+    return {
+        top: box.top + pageYOffset,
+        left: box.left + pageXOffset
+    };
 }
