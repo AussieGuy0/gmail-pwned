@@ -33,14 +33,37 @@ class JobQueue {
     }
 }
 
-const DEBUG = true;
+class Cache {
+
+    constructor() {
+
+    }
+
+    getItem(key) {
+        const item = sessionStorage.getItem(key);
+        if (item !== null) {
+            return JSON.parse(item)
+        } else {
+            return null;
+        }
+    }
+
+    setItem(key, item) {
+        sessionStorage.setItem(key, JSON.stringify(item));
+
+    }
+
+}
+
+const DEBUG = false;
 const logger = new Logger();
 const imgClass = 'pwned-warning-icon';
 const popupClass = 'pwned-breach-popup';
 const breachUrl = 'https://haveibeenpwned.com/api/v2/breachedaccount/';
 
 const warnedDivs = [];
-const jobQueue = new JobQueue(2000);
+const jobQueue = new JobQueue(2500);
+const cache = new Cache();
 
 function main() {
     const emailDivs = document.querySelectorAll("*[email]");
@@ -80,10 +103,10 @@ function getBreachesAndInsertIcon(email, emailDiv) {
         return;
     }
 
-    const cached = localStorage.getItem(email);
-    if (cached != null) {
+    const cached = cache.getItem(email);
+    if (cached !== null) {
         logger.log(`Getting ${email} breaches from cache`);
-        addBreachToDiv(JSON.parse(cached));
+        addBreachToDiv(cached);
     } else {
         logger.log(`Getting ${email} breaches from api`);
         jobQueue.addJob(() => {
@@ -138,7 +161,7 @@ function fetchBreaches(email) {
                 return [];
             }
         }).then((json) => {
-            localStorage.setItem(email, JSON.stringify(json));
+            cache.setItem(email, json);
             return json;
         })
 }
