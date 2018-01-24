@@ -3,7 +3,6 @@ A chrome extension to see if a received email comes from an address that's been 
 
 ![](screenshot.png)
 
-**Currently only working for Google Inbox** 
 
 ## Overview
 Adds a small icon next to email addresses that have been in a data breach. 
