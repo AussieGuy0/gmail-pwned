@@ -1,9 +1,9 @@
 {
-  "name": "Gmail Pwned",
+  "name": "Mail Pwned",
   "version": "0.0.1",
   "manifest_version": 2,
   "description": "Checks if received email comes from an address that has been in a data breach",
-  "homepage_url": "http://github.com/AussieGuy0/gmail-pwned",
+  "homepage_url": "http://github.com/AussieGuy0/mail-pwned",
   "icons": {
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
